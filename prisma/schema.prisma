@@ -39,8 +39,8 @@ model Department {
 
 model User {
   id            Int            @id @default(autoincrement())
-  username      String         @unique
-  passwordHash  String         @map("password_hash")
+  email         String         @unique
+  password      String         @map("password")
   firstName     String         @map("first_name")
   lastName      String         @map("last_name")
   department    Department?    @relation(fields: [departmentId], references: [id])
