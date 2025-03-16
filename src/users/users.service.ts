@@ -20,7 +20,7 @@ export class UsersService {
 
   async registerEmployeeUser(createUserDto: CreateUserDto): Promise<User> {
     try {
-      const newAdmin = await this.prisma.user.create({
+      const newEmployee = await this.prisma.user.create({
         data: {
           email: createUserDto.email,
           password: await hash(createUserDto.password, 10),
@@ -31,9 +31,9 @@ export class UsersService {
         },
       });
 
-      delete newAdmin.password;
+      delete newEmployee.password;
 
-      return newAdmin;
+      return newEmployee;
     } catch (error) {
       // check if email already registered and throw error
       if (error.code === 'P2002') {
@@ -45,7 +45,7 @@ export class UsersService {
     }
   }
 
-  async loginAdmin(loginUserDto: LoginUserDto): Promise<LoginResponse> {
+  async loginUser(loginUserDto: LoginUserDto): Promise<LoginResponse> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { email: loginUserDto.email },
@@ -63,11 +63,13 @@ export class UsersService {
         sub: user.id,
         email: user.email,
         name: `${user.firstName} ${user.lastName}`,
+        role: user.role,
       };
 
       return {
         name: payload.name,
         email: payload.email,
+        role: payload.role,
         token: await this.jwtService.signAsync(payload),
       };
     } catch (error) {

@@ -20,13 +20,12 @@ export class UsersController {
 
   constructor(private readonly userService: UsersService) {}
 
-  @Post('register')
+  @Post('employee-register')
   async registerEmployeeUser(
     @Res() response: Response,
     @Body() createUserDto: CreateUserDto,
   ): Promise<any> {
     try {
-      // call users service method to register new user
       const newUser =
         await this.userService.registerEmployeeUser(createUserDto);
 
@@ -57,12 +56,12 @@ export class UsersController {
 
   @Public()
   @Post('login')
-  async loginAdmin(
+  async loginUser(
     @Res() response: Response,
     @Body() loginUserDto: LoginUserDto,
   ): Promise<any> {
     try {
-      const loginRes = await this.userService.loginAdmin(loginUserDto);
+      const loginRes = await this.userService.loginUser(loginUserDto);
 
       return response.status(StatusCodes.OK).json({
         statusCode: StatusCodes.OK,
