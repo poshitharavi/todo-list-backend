@@ -9,7 +9,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto, LoginUserDto } from './dtos';
 import { compare, hash } from 'bcrypt';
 import { User } from '@prisma/client';
-import { LoginResponse, UserPayload } from './interfaces';
+import { AllEmployeeResponse, LoginResponse, UserPayload } from './interfaces';
 
 @Injectable()
 export class UsersService {
@@ -75,5 +75,22 @@ export class UsersService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async getAllEmployees(): Promise<AllEmployeeResponse[]> {
+    const employees = await this.prisma.user.findMany({
+      where: {
+        role: 'employee',
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        department: true,
+      },
+    });
+
+    return employees;
   }
 }

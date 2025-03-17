@@ -2,17 +2,22 @@ import {
   Body,
   ConflictException,
   Controller,
+  Get,
   Logger,
   NotFoundException,
   Post,
   Res,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Public } from 'src/common/decorators/public.decorator';
 import { CreateUserDto, LoginUserDto } from './dtos';
 import { getReasonPhrase, StatusCodes } from 'http-status-codes';
 import { Response } from 'express';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { AuthGuard } from 'src/common/guard/auth.guard';
+import { RolesGuard } from 'src/common/guard/roles.guard';
 
 @Controller('users')
 export class UsersController {
@@ -20,7 +25,9 @@ export class UsersController {
 
   constructor(private readonly userService: UsersService) {}
 
+  @Roles('admin')
   @Post('employee-register')
+  @UseGuards(AuthGuard, RolesGuard)
   async registerEmployeeUser(
     @Res() response: Response,
     @Body() createUserDto: CreateUserDto,
@@ -37,7 +44,7 @@ export class UsersController {
         },
       });
     } catch (error) {
-      this.logger.error(`Error at /user/register: ${error.message}`);
+      this.logger.error(`Error at /user/employee-register: ${error.message}`);
       if (error instanceof ConflictException) {
         // Handle UnauthorizedException differently
         return response.status(StatusCodes.CONFLICT).json({
@@ -89,6 +96,31 @@ export class UsersController {
           statusCode: StatusCodes.NOT_FOUND,
         });
       }
+      return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: 'Something went wrong',
+        error: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR),
+        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      });
+    }
+  }
+
+  @Roles('admin')
+  @Get('employees')
+  @UseGuards(AuthGuard, RolesGuard)
+  async getAllEmployees(@Res() response: Response): Promise<any> {
+    try {
+      const employees = await this.userService.getAllEmployees();
+
+      return response.status(StatusCodes.OK).json({
+        statusCode: StatusCodes.OK,
+        message: 'Successfully retrieved all products',
+        body: {
+          employees,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Error at /user/employees: ${error.message}`);
+
       return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
         message: 'Something went wrong',
         error: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR),
