@@ -7,6 +7,9 @@ import { AuthGuard } from './common/guard/auth.guard';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { DepartmentsModule } from './department/departments.module';
+import { TasksController } from './tasks/tasks.controller';
+import { TasksService } from './tasks/tasks.service';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   imports: [
@@ -18,14 +21,16 @@ import { DepartmentsModule } from './department/departments.module';
     }),
     UsersModule,
     DepartmentsModule,
+    TasksModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, TasksController],
   providers: [
     AppService,
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
+    TasksService,
   ],
 })
 export class AppModule {}
