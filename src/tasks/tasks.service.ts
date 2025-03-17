@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Task, TaskPriority } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AddTaskDto } from './dtos/new-task.dto';
+import { TaskAnalytics } from './interfaces';
 
 @Injectable()
 export class TasksService {
@@ -38,5 +39,59 @@ export class TasksService {
 
   getPriorityList(): string[] {
     return ['Low', 'Medium', 'High'];
+  }
+
+  async getTaskAnalytics(): Promise<TaskAnalytics[]> {
+    const tasks = await this.prisma.task.findMany({
+      include: {
+        assignedTo: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+
+    const usersMap = tasks.reduce((acc, task) => {
+      const userId = task.assignedToId;
+      if (!acc.has(userId)) {
+        acc.set(userId, {
+          userId,
+          userName: `${task.assignedTo.firstName} ${task.assignedTo.lastName} `,
+          tasks: [],
+        });
+      }
+      acc.get(userId).tasks.push(task);
+      return acc;
+    }, new Map<number, { userId: number; userName: string; tasks: typeof tasks }>());
+
+    const analytics: TaskAnalytics[] = Array.from(usersMap.values()).map(
+      ({ userId, userName, tasks }) => {
+        const totalTasks = tasks.length;
+        const completedTasks = tasks.filter((t) => t.isCompleted).length;
+        const pendingTasks = totalTasks - completedTasks;
+        const expiredTasks = tasks.filter(
+          (t) => !t.isCompleted && t.dueDate < new Date(),
+        ).length;
+        const completionPercentage =
+          totalTasks === 0
+            ? 0
+            : Math.round((completedTasks / totalTasks) * 100);
+
+        return {
+          userId,
+          userName,
+          totalTasks,
+          completedTasks,
+          pendingTasks,
+          expiredTasks,
+          completionPercentage,
+        };
+      },
+    );
+
+    return analytics;
   }
 }

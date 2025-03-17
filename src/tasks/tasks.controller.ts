@@ -107,4 +107,29 @@ export class TasksController {
       });
     }
   }
+
+  @Roles('admin')
+  @Get('analytics')
+  @UseGuards(AuthGuard, RolesGuard)
+  async getTaskAnalytics(@Res() response: Response): Promise<any> {
+    try {
+      const analytics = await this.tasksService.getTaskAnalytics();
+
+      return response.status(StatusCodes.OK).json({
+        statusCode: StatusCodes.OK,
+        message: 'Successfully calculated the task analytics',
+        body: {
+          analytics,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Error at /task/analytics : ${error.message}`);
+
+      return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: 'Something went wrong',
+        error: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR),
+        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      });
+    }
+  }
 }
