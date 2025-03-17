@@ -46,6 +46,7 @@ model User {
   department    Department?    @relation(fields: [departmentId], references: [id])
   departmentId  Int?
   role          UserRole
+  active        Boolean        @default(true)
   createdTasks  Task[]         @relation("CreatedTasks")
   assignedTasks Task[]         @relation("AssignedTasks")
   notifications Notification[]

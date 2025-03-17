@@ -10,6 +10,7 @@ import { CreateUserDto, LoginUserDto } from './dtos';
 import { compare, hash } from 'bcrypt';
 import { User } from '@prisma/client';
 import { AllEmployeeResponse, LoginResponse, UserPayload } from './interfaces';
+import { UpdateEmployeeDto } from './dtos/update-employee.dto';
 
 @Injectable()
 export class UsersService {
@@ -81,6 +82,7 @@ export class UsersService {
     const employees = await this.prisma.user.findMany({
       where: {
         role: 'employee',
+        active: true,
       },
       select: {
         id: true,
@@ -89,8 +91,119 @@ export class UsersService {
         email: true,
         department: true,
       },
+      orderBy: {
+        id: 'asc',
+      },
     });
 
     return employees;
+  }
+
+  async getEmployeeById(id: number): Promise<AllEmployeeResponse> {
+    try {
+      const employee = await this.prisma.user.findUniqueOrThrow({
+        where: {
+          role: 'employee',
+          active: true,
+          id,
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          department: true,
+        },
+      });
+
+      return employee;
+    } catch (error) {
+      // check if post not found and throw error
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`User with id ${id} not found`);
+      }
+
+      // throw error if any
+      throw error;
+    }
+  }
+
+  async updateEmployee(
+    id: number,
+    updateEmployeeDto: UpdateEmployeeDto,
+  ): Promise<User> {
+    try {
+      await this.prisma.user.findUniqueOrThrow({
+        where: {
+          id,
+          role: 'employee',
+          active: true,
+        },
+      });
+
+      const updatedEmployee = await this.prisma.user.update({
+        where: {
+          id,
+          role: 'employee',
+          active: true,
+        },
+        data: {
+          ...updateEmployeeDto,
+        },
+      });
+
+      return updatedEmployee;
+    } catch (error) {
+      // check if post not found and throw error
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`User with id ${id} not found`);
+      }
+
+      // check if email already registered and throw error
+      if (error.code === 'P2002') {
+        throw new ConflictException('Email already registered');
+      }
+
+      // throw error if any
+      throw error;
+    }
+  }
+
+  async deactivateEmployee(id: number): Promise<boolean> {
+    try {
+      await this.prisma.user.findUniqueOrThrow({
+        where: {
+          id,
+          role: 'employee',
+          active: true,
+        },
+      });
+
+      await this.prisma.user.update({
+        where: {
+          id,
+          role: 'employee',
+          active: true,
+        },
+        data: {
+          active: false,
+        },
+      });
+
+      return true;
+    } catch (error) {
+      // check if post not found and throw error
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`User with id ${id} not found`);
+      }
+
+      // check if email already registered and throw error
+      if (error.code === 'P2002') {
+        throw new ConflictException('Email already registered');
+      }
+
+      // throw error if any
+      throw error;
+    }
   }
 }
