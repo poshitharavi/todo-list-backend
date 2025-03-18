@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Task, TaskPriority } from '@prisma/client';
+import { Task } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AddTaskDto } from './dtos/new-task.dto';
 import { TaskAnalytics } from './interfaces';
@@ -17,7 +17,7 @@ export class TasksService {
           dueDate: addTaskDto.dueDate,
           createdById: adminId,
           assignedToId: addTaskDto.assignedToId,
-          priority: addTaskDto.priority as TaskPriority,
+          priority: addTaskDto.priority as any,
         },
       });
 
