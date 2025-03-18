@@ -3,6 +3,10 @@ import {
   Controller,
   Get,
   Logger,
+  NotFoundException,
+  Param,
+  ParseIntPipe,
+  Patch,
   Post,
   Req,
   Res,
@@ -124,6 +128,43 @@ export class TasksController {
       });
     } catch (error) {
       this.logger.error(`Error at /task/analytics : ${error.message}`);
+
+      return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: 'Something went wrong',
+        error: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR),
+        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      });
+    }
+  }
+
+  @Roles('employee')
+  @Patch('status-update/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  async updateTaskStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Res() response: Response,
+  ): Promise<any> {
+    try {
+      const updatedTask = await this.tasksService.updateTaskStatus(id);
+
+      return response.status(StatusCodes.OK).json({
+        statusCode: StatusCodes.OK,
+        message: `Successfully updated status of task ${id}`,
+        body: {
+          updatedTask,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Error at /task/status-update/${id}: ${error.message}`);
+
+      if (error instanceof NotFoundException) {
+        // Handle UnauthorizedException differently
+        return response.status(StatusCodes.NOT_FOUND).json({
+          message: error.message,
+          error: getReasonPhrase(StatusCodes.NOT_FOUND),
+          statusCode: StatusCodes.NOT_FOUND,
+        });
+      }
 
       return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
         message: 'Something went wrong',

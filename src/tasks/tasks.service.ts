@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Task, TaskPriority } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AddTaskDto } from './dtos/new-task.dto';
@@ -31,6 +31,9 @@ export class TasksService {
     const tasks = await this.prisma.task.findMany({
       where: {
         assignedToId: id,
+      },
+      orderBy: {
+        id: 'asc',
       },
     });
 
@@ -93,5 +96,34 @@ export class TasksService {
     );
 
     return analytics;
+  }
+
+  async updateTaskStatus(id: number): Promise<Task> {
+    try {
+      const task = await this.prisma.task.findUniqueOrThrow({
+        where: {
+          id,
+        },
+      });
+
+      const updatedTask = await this.prisma.task.update({
+        where: {
+          id,
+        },
+        data: {
+          isCompleted: !task.isCompleted,
+        },
+      });
+
+      return updatedTask;
+    } catch (error) {
+      // check if post not found and throw error
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`Product with id ${id} not found`);
+      }
+
+      // throw error if any
+      throw error;
+    }
   }
 }
