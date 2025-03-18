@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    ports:
+      - '3000:3000'
+    depends_on:
+      # If you were running a local PostgreSQL, you'd list it here

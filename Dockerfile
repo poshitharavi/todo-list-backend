@@ -1,19 +1,20 @@
-FROM node:18-alpine AS builder
+# Use an official Node.js runtime as a parent image
+FROM node:18
 
-WORKDIR /app
+# Set the working directory in the container
+WORKDIR /usr/src/app
 
-COPY package.json package-lock.json ./
+# Copy the package*.json files
+COPY package*.json ./
+
+# Install any needed packages specified in package.json
 RUN npm install
 
+# Bundle app source
 COPY . .
-RUN npm run build
 
-FROM node:18-alpine AS production
+# Expose port 3000 to the docker host, so we can access it from the outside
+EXPOSE 3000
 
-WORKDIR /app
-
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY package.json ./
-
-CMD ["node", "dist/main"]
+# Run app.js when the container launches
+CMD ["npm", "run", "start:dev"]
